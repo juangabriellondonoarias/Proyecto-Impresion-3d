@@ -1,0 +1,133 @@
+<div class="page-head">
+  <div>
+    <h1>Productos</h1>
+    <p>Guarda los datos de impresión de una unidad de cada producto y relaciónalo con su filamento. Desde aquí puedes abrirlo en la calculadora.</p>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="openNew()">Nuevo producto</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad page-alert">{{ error() }}</div>
+}
+
+@if (editingId() !== undefined) {
+  <form class="card edit" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h2>{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" formControlName="nombre" [class.invalid]="invalid('nombre')" />
+      </div>
+      <div class="field">
+        <label for="referencia">Referencia</label>
+        <input id="referencia" formControlName="referencia" />
+      </div>
+      <div class="field">
+        <label for="filamentoId">Filamento</label>
+        <select id="filamentoId" formControlName="filamentoId">
+          <option [ngValue]="null">Sin asignar</option>
+          @for (f of filaments(); track f.id) {
+            <option [ngValue]="f.id">{{ f.etiqueta }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="pesoG">Peso de la pieza</label>
+        <div class="input-wrap">
+          <input id="pesoG" type="number" min="0" formControlName="pesoG" [class.invalid]="invalid('pesoG')" />
+          <span class="unit">g</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="desperdicioPorUnidadG">Soportes y desperdicio</label>
+        <div class="input-wrap">
+          <input id="desperdicioPorUnidadG" type="number" min="0" formControlName="desperdicioPorUnidadG" [class.invalid]="invalid('desperdicioPorUnidadG')" />
+          <span class="unit">g</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="tiempoImpresionMinPorUnidad">Tiempo de impresión</label>
+        <div class="input-wrap">
+          <input id="tiempoImpresionMinPorUnidad" type="number" min="0" formControlName="tiempoImpresionMinPorUnidad" [class.invalid]="invalid('tiempoImpresionMinPorUnidad')" />
+          <span class="unit">min</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="posprocesoMinPorUnidad">Posprocesado</label>
+        <div class="input-wrap">
+          <input id="posprocesoMinPorUnidad" type="number" min="0" formControlName="posprocesoMinPorUnidad" [class.invalid]="invalid('posprocesoMinPorUnidad')" />
+          <span class="unit">min</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="empaquePorUnidad">Empaque</label>
+        <div class="input-wrap">
+          <input id="empaquePorUnidad" type="number" min="0" step="100" formControlName="empaquePorUnidad" [class.invalid]="invalid('empaquePorUnidad')" />
+          <span class="unit">COP</span>
+        </div>
+      </div>
+      <div class="field wide">
+        <label for="notas">Notas</label>
+        <input id="notas" formControlName="notas" />
+      </div>
+    </div>
+    @if (formError()) {
+      <div class="alert alert-bad">{{ formError() }}</div>
+    }
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">Guardar</button>
+      <button type="button" class="btn" (click)="cancel()">Cancelar</button>
+    </div>
+  </form>
+}
+
+<section class="card">
+  @if (products().length) {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Filamento</th>
+            <th class="num">Peso</th>
+            <th class="num">Impresión</th>
+            <th class="num">Material/u</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of products(); track p.id) {
+            <tr>
+              <td>
+                <strong>{{ p.nombre }}</strong>
+                @if (p.demo) {
+                  <span class="tag tag-demo">Demo</span>
+                }
+                @if (p.referencia) {
+                  <br /><small class="muted">{{ p.referencia }}</small>
+                }
+              </td>
+              <td>
+                @if (p.filamento) {
+                  {{ p.filamento.material }} {{ p.filamento.color }}
+                } @else {
+                  <span class="muted">Sin asignar</span>
+                }
+              </td>
+              <td class="num">{{ p.pesoG | num }} g</td>
+              <td class="num">{{ (p.tiempoImpresionMinPorUnidad ?? 0) / 60 | hours }}</td>
+              <td class="num">{{ materialCost(p) | cop }}</td>
+              <td class="row-actions">
+                <a class="btn btn-sm btn-accent" routerLink="/calculadora" [queryParams]="{ producto: p.id }">Calcular precio</a>
+                <button type="button" class="btn btn-sm" (click)="edit(p)">Editar</button>
+                <button type="button" class="btn btn-sm btn-danger" (click)="remove(p)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="empty">Aún no hay productos. Crea uno con «Nuevo producto» o guárdalo desde la calculadora.</p>
+  }
+</section>

@@ -1,0 +1,19 @@
+# Reglas generales del repositorio. Backend/ y Frontend/ tienen además su propio .gitignore.
+
+# Variables de entorno con contraseñas: nunca se suben. Sí se sube la plantilla .env.example.
+.env
+.env.*
+!.env.example
+
+# Base H2 que se usaba antes de MySQL
+Backend/data/
+
+# Configuración local de herramientas
+.claude/
+.idea/
+.vscode/
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+.DS_Store

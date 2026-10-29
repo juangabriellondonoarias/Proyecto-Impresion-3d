@@ -1,0 +1,124 @@
+<div class="page-head">
+  <div>
+    <h1>Filamentos e inventario</h1>
+    <p>Registra cada rollo con su precio de compra y peso. El costo por kilogramo se calcula solo y la calculadora lo usa al elegir el filamento.</p>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="openNew()">Nuevo filamento</button>
+</div>
+
+<div class="summary">
+  <div class="card"><span class="muted">Filamentos</span><strong>{{ filaments().length }}</strong></div>
+  <div class="card"><span class="muted">Material disponible</span><strong>{{ totalKg() | num }} kg</strong></div>
+  <div class="card"><span class="muted">Valor del inventario</span><strong>{{ inventoryValue() | cop }}</strong></div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad">{{ error() }}</div>
+}
+
+@if (editingId() !== undefined) {
+  <form class="card edit" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h2>{{ editingId() ? 'Editar filamento' : 'Nuevo filamento' }}</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="material">Material</label>
+        <input id="material" list="material-list" formControlName="material" [class.invalid]="invalid('material')" />
+        <datalist id="material-list">
+          @for (m of materials; track m) {
+            <option [value]="m"></option>
+          }
+        </datalist>
+        <span class="hint">Elige de la lista o escribe uno nuevo.</span>
+      </div>
+      <div class="field">
+        <label for="color">Color</label>
+        <input id="color" formControlName="color" [class.invalid]="invalid('color')" />
+      </div>
+      <div class="field">
+        <label for="marca">Marca</label>
+        <input id="marca" formControlName="marca" />
+      </div>
+      <div class="field">
+        <label for="precioCompra">Precio de compra</label>
+        <div class="input-wrap">
+          <input id="precioCompra" type="number" min="0" step="1000" formControlName="precioCompra" [class.invalid]="invalid('precioCompra')" />
+          <span class="unit">COP</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="pesoInicialG">Peso inicial</label>
+        <div class="input-wrap">
+          <input id="pesoInicialG" type="number" min="1" formControlName="pesoInicialG" [class.invalid]="invalid('pesoInicialG')" />
+          <span class="unit">g</span>
+        </div>
+        <span class="hint">Filamento neto, sin el carrete.</span>
+      </div>
+      <div class="field">
+        <label for="pesoDisponibleG">Peso disponible estimado</label>
+        <div class="input-wrap">
+          <input id="pesoDisponibleG" type="number" min="0" formControlName="pesoDisponibleG" [class.invalid]="invalid('pesoDisponibleG')" />
+          <span class="unit">g</span>
+        </div>
+      </div>
+      <div class="field wide">
+        <label for="notas">Notas</label>
+        <input id="notas" formControlName="notas" />
+      </div>
+    </div>
+    <p class="preview">Costo por kilogramo: <strong>{{ previewCostPerKg() | cop }}</strong></p>
+    @if (formError()) {
+      <div class="alert alert-bad">{{ formError() }}</div>
+    }
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">Guardar</button>
+      <button type="button" class="btn" (click)="cancel()">Cancelar</button>
+    </div>
+  </form>
+}
+
+<section class="card">
+  @if (filaments().length) {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Filamento</th>
+            <th class="num">Precio compra</th>
+            <th class="num">Costo/kg</th>
+            <th>Disponible</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of filaments(); track f.id) {
+            <tr>
+              <td>
+                <strong>{{ f.material }}</strong> {{ f.color }}
+                @if (f.marca) {
+                  <span class="muted"> · {{ f.marca }}</span>
+                }
+                @if (f.demo) {
+                  <span class="tag tag-demo">Demo</span>
+                }
+              </td>
+              <td class="num">{{ f.precioCompra | cop }}</td>
+              <td class="num">{{ f.costoPorKg | cop }}</td>
+              <td class="stock">
+                <div class="meter" [class.low]="stockPct(f) < 20">
+                  <span [style.width.%]="stockPct(f)"></span>
+                </div>
+                <small class="num">{{ f.pesoDisponibleG | num }} / {{ f.pesoInicialG | num }} g · {{ stockPct(f) | pct }}</small>
+              </td>
+              <td class="row-actions">
+                <button type="button" class="btn btn-sm" (click)="edit(f)">Editar</button>
+                <button type="button" class="btn btn-sm btn-danger" (click)="remove(f)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="empty">Aún no hay filamentos. Agrega el primero con «Nuevo filamento».</p>
+  }
+</section>

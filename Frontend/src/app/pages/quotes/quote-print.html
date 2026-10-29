@@ -1,0 +1,95 @@
+<div class="toolbar no-print">
+  @if (quote(); as q) {
+    <a class="btn" [routerLink]="['/cotizaciones', q.id]">← Volver a la cotización</a>
+  }
+  <button type="button" class="btn btn-primary" (click)="print()" [disabled]="!quote()">Imprimir o guardar PDF</button>
+  <p class="muted">En el diálogo de impresión elige «Guardar como PDF» como destino.</p>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad no-print">{{ error() }}</div>
+}
+
+@if (quote(); as q) {
+  <article class="doc">
+    <header class="doc-head">
+      <div class="biz">
+        <h1>{{ settings()?.nombreNegocio || 'Mi negocio' }}</h1>
+        @if (settings()?.contactoNegocio) {
+          <p class="pre">{{ settings()?.contactoNegocio }}</p>
+        }
+      </div>
+      <div class="meta">
+        <span class="kind">Cotización</span>
+        <strong>{{ q.numero }}</strong>
+        <dl>
+          <dt>Fecha</dt>
+          <dd>{{ q.fechaEmision | fecha }}</dd>
+          @if (q.diasVigencia > 0) {
+            <dt>Válida hasta</dt>
+            <dd>{{ q.fechaVencimiento | fecha }}</dd>
+          }
+        </dl>
+      </div>
+    </header>
+
+    <section class="client">
+      <span class="label">Cliente</span>
+      <strong>{{ q.nombreCliente }}</strong>
+      @if (q.contactoCliente) {
+        <span>{{ q.contactoCliente }}</span>
+      }
+    </section>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th class="num">Cantidad</th>
+          <th class="num">Precio unitario</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of q.items; track item.id) {
+          <tr>
+            <td>{{ item.descripcion }}</td>
+            <td class="num">{{ item.cantidad }}</td>
+            <td class="num">{{ item.precioUnitario | cop }}</td>
+            <td class="num">{{ item.cantidad * item.precioUnitario | cop }}</td>
+          </tr>
+        }
+        @if (q.resumen.precioFijo > 0) {
+          <tr>
+            <td>Diseño, preparación y envío</td>
+            <td class="num">1</td>
+            <td class="num">{{ q.resumen.precioFijo | cop }}</td>
+            <td class="num">{{ q.resumen.precioFijo | cop }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <dl>
+        @if (q.resumen.montoDescuento > 0) {
+          <dt>Subtotal</dt>
+          <dd>{{ q.resumen.totalBruto | cop }}</dd>
+          <dt>Descuento ({{ q.resumen.descuentoPct | pct }})</dt>
+          <dd>−{{ q.resumen.montoDescuento | cop }}</dd>
+        }
+        <dt class="grand">Total</dt>
+        <dd class="grand">{{ q.resumen.total | cop }}</dd>
+      </dl>
+    </div>
+
+    @if (q.condiciones) {
+      <section class="condiciones">
+        <h2>Condiciones comerciales</h2>
+        <p class="pre">{{ q.condiciones }}</p>
+      </section>
+    }
+
+    <footer class="doc-foot">Valores en pesos colombianos (COP).</footer>
+  </article>
+}

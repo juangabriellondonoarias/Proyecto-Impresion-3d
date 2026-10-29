@@ -1,0 +1,228 @@
+<div class="page-head">
+  <div>
+    <h1>Descuentos por mayor</h1>
+    <p>
+      Compara descuentos sobre el precio de lista para una cantidad. Al pedir más unidades, los costos del pedido
+      (preparación, diseño, envío) se reparten entre más piezas; el material y el tiempo por pieza no bajan.
+    </p>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad page-alert" role="alert">{{ error() }}</div>
+}
+
+<div class="layout">
+  <form class="card stack-form" [formGroup]="form" novalidate>
+    <h2>Pedido</h2>
+    <div class="form-grid">
+      <div class="field wide">
+        <label for="productoId">Producto</label>
+        <select id="productoId" formControlName="productoId" [class.invalid]="invalido('productoId')">
+          @for (p of productos(); track p.id) {
+            <option [ngValue]="p.id">{{ p.nombre }}{{ p.referencia ? ' · ' + p.referencia : '' }}</option>
+          }
+        </select>
+        @if (!productos().length) {
+          <span class="hint">No hay productos. <a routerLink="/productos">Crea uno</a> primero.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="cantidad">Cantidad</label>
+        <div class="input-wrap">
+          <input id="cantidad" type="number" min="1" step="1" formControlName="cantidad" [class.invalid]="invalido('cantidad')" />
+          <span class="unit">u</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cantidadReferencia">Precio de lista para</label>
+        <div class="input-wrap">
+          <input id="cantidadReferencia" type="number" min="1" step="1" formControlName="cantidadReferencia" [class.invalid]="invalido('cantidadReferencia')" />
+          <span class="unit">u</span>
+        </div>
+        <span class="hint">Normalmente 1 unidad.</span>
+      </div>
+      <div class="field">
+        <label for="margenPct">Margen deseado</label>
+        <div class="input-wrap">
+          <input id="margenPct" type="number" min="0" max="95" formControlName="margenPct" [class.invalid]="invalido('margenPct')" />
+          <span class="unit">%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="margenMinimoPct">Margen mínimo</label>
+        <div class="input-wrap">
+          <input id="margenMinimoPct" type="number" min="0" max="95" formControlName="margenMinimoPct" [class.invalid]="invalido('margenMinimoPct')" />
+          <span class="unit">%</span>
+        </div>
+        <span class="hint">Ningún descuento puede bajar de aquí.</span>
+      </div>
+    </div>
+
+    <h3>Costos del pedido</h3>
+    <p class="hint-line">Se cobran una vez por pedido. Son los que se reparten al vender más unidades.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label for="tiempoPreparacionMin">Preparación</label>
+        <div class="input-wrap">
+          <input id="tiempoPreparacionMin" type="number" min="0" formControlName="tiempoPreparacionMin" />
+          <span class="unit">min</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="costoDiseno">Diseño</label>
+        <div class="input-wrap">
+          <input id="costoDiseno" type="number" min="0" step="1000" formControlName="costoDiseno" />
+          <span class="unit">COP</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="costoEnvio">Envío</label>
+        <div class="input-wrap">
+          <input id="costoEnvio" type="number" min="0" step="1000" formControlName="costoEnvio" />
+          <span class="unit">COP</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="otrosCostos">Otros</label>
+        <div class="input-wrap">
+          <input id="otrosCostos" type="number" min="0" step="1000" formControlName="otrosCostos" />
+          <span class="unit">COP</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Descuentos a comparar</h3>
+    <div class="chips">
+      @for (d of descuentos(); track d) {
+        <span class="chip">
+          {{ d | num }} %
+          <button type="button" (click)="quitarDescuento(d)" [attr.aria-label]="'Quitar ' + d + ' %'">×</button>
+        </span>
+      }
+    </div>
+    <div class="add-row">
+      <div class="input-wrap">
+        <input
+          #campoDescuento
+          id="nuevoDescuento"
+          type="number"
+          min="0"
+          max="100"
+          placeholder="Otro descuento"
+          aria-label="Otro descuento"
+          (keydown.enter)="$event.preventDefault(); agregarDescuento(campoDescuento)"
+        />
+        <span class="unit">%</span>
+      </div>
+      <button type="button" class="btn" (click)="agregarDescuento(campoDescuento)">Agregar</button>
+    </div>
+  </form>
+
+  <div class="results" [class.stale]="cargando()">
+    @if (resultado(); as r) {
+      <section class="card">
+        <span class="eyebrow">{{ r.producto }} · {{ r.cantidad }} unidades</span>
+        <div class="tiles">
+          <div>
+            <span>Precio de lista</span>
+            <strong>{{ r.precioLista | cop }}</strong>
+            <small>por unidad, comprando {{ r.cantidadReferencia }}</small>
+          </div>
+          <div>
+            <span>Costo real por unidad</span>
+            <strong>{{ r.costoUnitario | cop }}</strong>
+            <small>con {{ r.cantidad }} unidades</small>
+          </div>
+          <div>
+            <span>Precio mínimo</span>
+            <strong>{{ r.precioMinimo | cop }}</strong>
+            <small>margen {{ r.margenMinimoPct | pct }}</small>
+          </div>
+          <div class="highlight">
+            <span>Descuento máximo admisible</span>
+            <strong>{{ r.descuentoMaximoPct | pct }}</strong>
+            <small>sugerido: {{ r.descuentoSugeridoPct | pct }} ({{ r.precioSugerido | cop }})</small>
+          </div>
+        </div>
+        @for (a of r.advertencias; track a) {
+          <div class="alert alert-warn">{{ a }}</div>
+        }
+      </section>
+
+      <section class="card">
+        <h2>Comparación de descuentos</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="num">Descuento</th>
+                <th class="num">Precio unitario</th>
+                <th class="num">Total del pedido</th>
+                <th class="num">Ganancia total</th>
+                <th class="num">Margen real</th>
+                <th class="num">Ahorro del cliente</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (o of r.opciones; track o.descuentoPct) {
+                <tr [class.blocked]="!o.permitido">
+                  <td class="num">{{ o.descuentoPct | pct }}</td>
+                  <td class="num">{{ o.precioUnitario | cop }}</td>
+                  <td class="num">{{ o.totalPedido | cop }}</td>
+                  <td class="num" [class.neg]="o.gananciaTotal < 0">{{ o.gananciaTotal | cop }}</td>
+                  <td class="num" [class.neg]="!o.permitido">{{ o.margenPct | pct }}</td>
+                  <td class="num">{{ o.ahorroCliente | cop }}</td>
+                  <td>
+                    @if (o.permitido) {
+                      <span class="pill ok">✓ Permitido</span>
+                    } @else {
+                      <span class="pill no">✕ Bajo el mínimo</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Cómo cambia con la cantidad</h2>
+        <p class="hint-line">Descuento máximo sobre el precio de lista ({{ r.precioLista | cop }}) que respeta el margen mínimo.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="num">Cantidad</th>
+                <th class="num">Costo por unidad</th>
+                <th class="num">Precio sugerido</th>
+                <th class="num">Precio mínimo</th>
+                <th>Descuento máximo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of r.escala; track e.cantidad) {
+                <tr [class.current]="e.cantidad === r.cantidad">
+                  <td class="num">{{ e.cantidad }}</td>
+                  <td class="num">{{ e.costoUnitario | cop }}</td>
+                  <td class="num">{{ e.precioSugerido | cop }}</td>
+                  <td class="num">{{ e.precioMinimo | cop }}</td>
+                  <td class="bar-cell">
+                    <span class="bar"><span [style.width.%]="(e.descuentoMaximoPct / maximoEscala()) * 100"></span></span>
+                    <span class="num">{{ e.descuentoMaximoPct | pct }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    } @else if (!error()) {
+      <section class="card">
+        <p class="muted">Elige un producto y una cantidad para comparar los descuentos.</p>
+      </section>
+    }
+  </div>
+</div>

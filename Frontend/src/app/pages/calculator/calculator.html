@@ -1,0 +1,252 @@
+<div class="page-head">
+  <div>
+    <h1>Calculadora de precios</h1>
+    <p>Calcula el costo real de un pedido y el precio de venta según tu margen. Los datos de energía, mano de obra y máquina vienen de Configuración y puedes ajustarlos aquí para este pedido.</p>
+  </div>
+</div>
+
+@if (loadError()) {
+  <div class="alert alert-bad load-error">
+    {{ loadError() }}
+    <button type="button" class="btn btn-sm" (click)="loadCatalog()">Reintentar</button>
+  </div>
+}
+
+<div class="layout">
+  <form class="stack" [formGroup]="form" (ngSubmit)="calculate()" novalidate>
+    <ng-template #numField let-f>
+      <div class="field">
+        <label [for]="f.key">{{ f.etiqueta }}</label>
+        <div class="input-wrap">
+          <input
+            type="number"
+            inputmode="decimal"
+            min="0"
+            [step]="f.step ?? 'any'"
+            [id]="f.key"
+            [formControlName]="f.key"
+            [class.invalid]="isInvalid(f.key)"
+          />
+          <span class="unit">{{ f.unit }}</span>
+        </div>
+        @if (errorText(f.key); as err) {
+          <span class="error">{{ err }}</span>
+        } @else if (f.hint) {
+          <span class="hint">{{ f.hint }}</span>
+        }
+      </div>
+    </ng-template>
+
+    <section class="card">
+      <h2>Producto</h2>
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="productoId">Cargar desde el catálogo</label>
+          <select id="productoId" formControlName="productoId">
+            <option [ngValue]="null">Producto nuevo (sin catálogo)</option>
+            @for (p of products(); track p.id) {
+              <option [ngValue]="p.id">{{ p.nombre }}{{ p.referencia ? ' · ' + p.referencia : '' }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="nombreProducto">Nombre</label>
+          <input id="nombreProducto" formControlName="nombreProducto" placeholder="Ej. Llavero personalizado" />
+        </div>
+        <div class="field">
+          <label for="referencia">Referencia</label>
+          <input id="referencia" formControlName="referencia" placeholder="Ej. LLV-01" />
+        </div>
+        <div class="field">
+          <label for="cantidad">Cantidad de unidades</label>
+          <input
+            id="cantidad"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            step="1"
+            formControlName="cantidad"
+            [class.invalid]="isInvalid('cantidad')"
+          />
+          @if (errorText('cantidad'); as err) {
+            <span class="error">{{ err }}</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Material</h2>
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="filamentoId">Filamento del inventario</label>
+          <select id="filamentoId" formControlName="filamentoId">
+            <option [ngValue]="null">Escribir los datos a mano</option>
+            @for (f of filaments(); track f.id) {
+              <option [ngValue]="f.id">{{ f.etiqueta }} · {{ f.costoPorKg | cop }}/kg</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="material">Material</label>
+          <input id="material" formControlName="material" placeholder="PLA, PETG…" />
+        </div>
+        <div class="field">
+          <label for="color">Color</label>
+          <input id="color" formControlName="color" />
+        </div>
+        @for (f of materialFields; track f.key) {
+          <ng-container *ngTemplateOutlet="numField; context: { $implicit: f }" />
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Tiempos</h2>
+      <div class="form-grid">
+        @for (f of timeFields; track f.key) {
+          <ng-container *ngTemplateOutlet="numField; context: { $implicit: f }" />
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Energía, máquina y mano de obra</h2>
+      <div class="form-grid">
+        @for (f of machineFields; track f.key) {
+          <ng-container *ngTemplateOutlet="numField; context: { $implicit: f }" />
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Costos adicionales</h2>
+      <div class="form-grid">
+        @for (f of extraFields; track f.key) {
+          <ng-container *ngTemplateOutlet="numField; context: { $implicit: f }" />
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Precio</h2>
+      <div class="form-grid">
+        @for (f of priceFields; track f.key) {
+          <ng-container *ngTemplateOutlet="numField; context: { $implicit: f }" />
+        }
+      </div>
+      @if (settings(); as s) {
+        <p class="hint-line muted">
+          Margen mínimo: {{ s.margenMinimoPct | pct }} · Redondeo del precio: {{ s.pasoRedondeo | cop }}. Se cambian en Configuración.
+        </p>
+      }
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-accent">Calcular precio</button>
+      <button type="button" class="btn" (click)="saveAsProduct()">
+        {{ form.controls.productoId.value ? 'Actualizar producto' : 'Guardar como producto' }}
+      </button>
+      <button type="button" class="btn" (click)="reset()">Limpiar</button>
+    </div>
+    @if (saveMessage()) {
+      <p class="muted save-msg" role="status">{{ saveMessage() }}</p>
+    }
+  </form>
+
+  <aside class="results" #results aria-live="polite">
+    @if (calcError()) {
+      <div class="alert alert-bad">{{ calcError() }}</div>
+    }
+
+    @if (result(); as r) {
+      <section class="card price-card" [class.stale]="loading()">
+        <span class="eyebrow">Precio de venta recomendado</span>
+        <div class="big">{{ r.precioUnitarioRecomendado | cop }} <small>por unidad</small></div>
+        <div class="sub">{{ r.precioLoteRecomendado | cop }} por {{ r.cantidad }} {{ r.cantidad === 1 ? 'unidad' : 'unidades' }}</div>
+
+        <dl class="kv">
+          <div><dt>Costo real por unidad</dt><dd>{{ r.costoUnitario | cop }}</dd></div>
+          <div><dt>Ganancia por unidad</dt><dd>{{ r.gananciaPorUnidad | cop }}</dd></div>
+          <div><dt>Ganancia del lote</dt><dd>{{ r.gananciaLote | cop }}</dd></div>
+          <div><dt>Margen real</dt><dd>{{ r.margenRealPct | pct }}</dd></div>
+          <div><dt>Precio mínimo rentable <small>(margen {{ r.margenMinimoPct | pct }})</small></dt><dd>{{ r.precioUnitarioMinimo | cop }}</dd></div>
+          <div><dt>Descuento máximo permitido</dt><dd>{{ r.descuentoMaximoPct | pct }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="card" [class.stale]="loading()">
+        <h2>Con el descuento propuesto ({{ r.descuentoPct | pct }})</h2>
+        @if (r.descuentoExcedeMaximo) {
+          <div class="alert alert-bad">El descuento supera el máximo de {{ r.descuentoMaximoPct | pct }}.</div>
+        }
+        <dl class="kv">
+          <div><dt>Precio final por unidad</dt><dd>{{ r.precioUnitarioFinal | cop }}</dd></div>
+          <div><dt>Total del pedido</dt><dd>{{ r.precioLoteFinal | cop }}</dd></div>
+          <div><dt>Ganancia por unidad</dt><dd [class.neg]="r.gananciaFinalPorUnidad < 0">{{ r.gananciaFinalPorUnidad | cop }}</dd></div>
+          <div><dt>Ganancia del lote</dt><dd [class.neg]="r.gananciaFinalLote < 0">{{ r.gananciaFinalLote | cop }}</dd></div>
+          <div><dt>Margen real</dt><dd [class.neg]="r.margenFinalPct < 0">{{ r.margenFinalPct | pct }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="card" [class.stale]="loading()">
+        <h2>Costos del pedido</h2>
+        @if (breakdown().length) {
+          <div class="bar" role="img" aria-label="Composición del costo total">
+            @for (p of breakdown(); track p.etiqueta) {
+              @if (p.pct > 0) {
+                <span [class]="p.cls" [style.width.%]="p.pct" [title]="p.etiqueta + ': ' + (p.pct | num) + ' %'"></span>
+              }
+            }
+          </div>
+        }
+        <table class="cost-table">
+          <tbody>
+            <tr>
+              <td><i class="dot c1"></i>Material <small class="muted">{{ r.gramosMaterialLote | num }} g · {{ r.costoMaterialPorUnidad | cop }}/u</small></td>
+              <td class="num">{{ r.costoMaterialLote | cop }}</td>
+            </tr>
+            <tr>
+              <td><i class="dot c2"></i>Mano de obra <small class="muted">{{ r.horasHumanas | hours }}</small></td>
+              <td class="num">{{ r.costoManoObra | cop }}</td>
+            </tr>
+            <tr>
+              <td><i class="dot c3"></i>Máquina <small class="muted">{{ r.horasMaquina | hours }}</small></td>
+              <td class="num">{{ r.costoMaquina | cop }}</td>
+            </tr>
+            <tr>
+              <td><i class="dot c4"></i>Electricidad</td>
+              <td class="num">{{ r.costoElectrico | cop }}</td>
+            </tr>
+            <tr>
+              <td>
+                <i class="dot c5"></i>Otros
+                <small class="muted">
+                  diseño {{ r.costoDiseno | cop }} · empaque {{ r.costoEmpaque | cop }} · envío {{ r.costoEnvio | cop }} · otros {{ r.otrosCostos | cop }}
+                </small>
+              </td>
+              <td class="num">{{ r.totalOtrosCostos | cop }}</td>
+            </tr>
+            <tr class="total">
+              <td>Costo total del pedido</td>
+              <td class="num">{{ r.costoTotal | cop }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="times">
+          <div><span class="muted">Tiempo de máquina</span><strong>{{ r.horasMaquina | hours }}</strong></div>
+          <div><span class="muted">Trabajo humano</span><strong>{{ r.horasHumanas | hours }}</strong></div>
+        </div>
+      </section>
+
+      @for (w of r.advertencias; track w) {
+        <div class="alert alert-warn">{{ w }}</div>
+      }
+    } @else {
+      <section class="card placeholder">
+        <h2>Resultados</h2>
+        <p class="muted">Completa los datos y presiona «Calcular precio». Después, los resultados se actualizan solos cada vez que cambias un valor.</p>
+      </section>
+    }
+  </aside>
+</div>

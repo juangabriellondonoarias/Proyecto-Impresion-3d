@@ -1,0 +1,7 @@
+# Las pruebas usan H2 en memoria con modo MySQL: no necesitan MySQL encendido ni tocan tus datos.
+# Flyway ejecuta las mismas migraciones que en producción, así también se prueban los scripts SQL.
+spring:
+  datasource:
+    url: "jdbc:h2:mem:costos-prueba;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+    username: sa
+    password: ""

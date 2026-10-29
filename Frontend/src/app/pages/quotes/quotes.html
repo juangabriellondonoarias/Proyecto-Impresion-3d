@@ -1,0 +1,84 @@
+<div class="page-head">
+  <div>
+    <h1>Cotizaciones y ventas</h1>
+    <p>Una cotización no es una venta: solo cuenta como venta cuando la registras como tal. Al registrarla se descuenta el filamento del inventario.</p>
+  </div>
+  <a class="btn btn-primary" routerLink="/cotizaciones/nueva">Nueva cotización</a>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad page-alert">{{ error() }}</div>
+}
+
+<div class="summary">
+  <div class="card">
+    <span class="muted">Cotizaciones abiertas</span>
+    <strong>{{ pending().length }}</strong>
+    <small class="muted">{{ pendingTotal() | cop }} posibles, no realizados</small>
+  </div>
+  <div class="card sale">
+    <span class="muted">Ventas registradas</span>
+    <strong>{{ sales().length }}</strong>
+    <small class="muted">{{ salesTotal() | cop }} vendidos</small>
+  </div>
+  <div class="card sale">
+    <span class="muted">Ganancia de las ventas</span>
+    <strong>{{ salesProfit() | cop }}</strong>
+    <small class="muted">Estimada con los costos cotizados</small>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" [class.on]="tab() === 'cotizaciones'" [attr.aria-selected]="tab() === 'cotizaciones'" (click)="tab.set('cotizaciones')">
+    Cotizaciones <span>{{ open().length }}</span>
+  </button>
+  <button type="button" role="tab" [class.on]="tab() === 'ventas'" [attr.aria-selected]="tab() === 'ventas'" (click)="tab.set('ventas')">
+    Ventas <span>{{ sales().length }}</span>
+  </button>
+</div>
+
+<section class="card">
+  @if (visible().length) {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>{{ tab() === 'ventas' ? 'Vendida' : 'Fecha' }}</th>
+            <th class="num">Total</th>
+            <th class="num">Ganancia</th>
+            <th class="num">Margen</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (q of visible(); track q.id) {
+            <tr>
+              <td><a [routerLink]="['/cotizaciones', q.id]">{{ q.numero }}</a></td>
+              <td>{{ q.nombreCliente }}</td>
+              <td>{{ (tab() === 'ventas' ? q.fechaVenta : q.fechaEmision) | fecha }}</td>
+              <td class="num">{{ q.resumen.total | cop }}</td>
+              <td class="num" [class.neg]="q.resumen.ganancia < 0">{{ q.resumen.ganancia | cop }}</td>
+              <td class="num" [class.neg]="q.resumen.bajoMargenMinimo">{{ q.resumen.margenPct | pct }}</td>
+              <td><span class="status" [attr.data-status]="q.estado">{{ statusLabel[q.estado] }}</span></td>
+              <td class="row-actions">
+                <a class="btn btn-sm" [routerLink]="['/cotizaciones', q.id]">Abrir</a>
+                <a class="btn btn-sm" [routerLink]="['/cotizaciones', q.id, 'imprimir']">PDF</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (loaded()) {
+    <p class="empty">
+      @if (tab() === 'ventas') {
+        Aún no hay ventas registradas. Abre una cotización y usa «Registrar venta» cuando el cliente la confirme.
+      } @else {
+        Aún no hay cotizaciones. Crea la primera con «Nueva cotización».
+      }
+    </p>
+  }
+</section>

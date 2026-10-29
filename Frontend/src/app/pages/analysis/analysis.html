@@ -1,0 +1,239 @@
+<div class="page-head">
+  <div>
+    <h1>Análisis de rentabilidad</h1>
+    <p>
+      Solo cuentan como ventas las cotizaciones registradas como venta. Las cotizaciones abiertas aparecen aparte,
+      como ventas posibles.
+    </p>
+  </div>
+  <div class="periodo" role="group" aria-label="Periodo">
+    @for (p of periodos; track p) {
+      <button type="button" [class.on]="meses() === p" [attr.aria-pressed]="meses() === p" (click)="cambiarPeriodo(p)">
+        {{ p }} meses
+      </button>
+    }
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad page-alert" role="alert">
+    {{ error() }}
+    <button type="button" class="btn btn-sm" (click)="cargar()">Reintentar</button>
+  </div>
+}
+
+@if (datos(); as d) {
+  <p class="rango muted" [class.stale]="cargando()">Del {{ d.desde | fecha }} al {{ d.hasta | fecha }}</p>
+
+  <div class="bloques" [class.stale]="cargando()">
+    <section class="card bloque venta">
+      <h2><span class="marca venta"></span>Ventas reales</h2>
+      <div class="kpis">
+        <div><span>Ingresos</span><strong>{{ d.ventas.ingresos | cop }}</strong></div>
+        <div><span>Ganancia</span><strong [class.neg]="d.ventas.ganancia < 0">{{ d.ventas.ganancia | cop }}</strong></div>
+        <div><span>Margen</span><strong>{{ d.ventas.margenPct | pct }}</strong></div>
+        <div><span>Ventas</span><strong>{{ d.ventas.cantidad }}</strong></div>
+        <div><span>Ticket promedio</span><strong>{{ d.ventas.ticketPromedio | cop }}</strong></div>
+        <div><span>Descuentos otorgados</span><strong>{{ d.ventas.descuentosOtorgados | cop }}</strong></div>
+      </div>
+    </section>
+
+    <section class="card bloque abierta">
+      <h2><span class="marca abierta"></span>Cotizaciones abiertas <small>(no realizadas)</small></h2>
+      <div class="kpis">
+        <div><span>Valor posible</span><strong>{{ d.abiertas.valor | cop }}</strong></div>
+        <div><span>Ganancia estimada</span><strong>{{ d.abiertas.gananciaEstimada | cop }}</strong></div>
+        <div><span>Cotizaciones</span><strong>{{ d.abiertas.cantidad }}</strong></div>
+        <div>
+          <span>Tasa de cierre</span><strong>{{ d.tasaCierrePct | pct }}</strong>
+          <small>{{ d.rechazadas }} rechazada{{ d.rechazadas === 1 ? '' : 's' }} en el periodo</small>
+        </div>
+      </div>
+      @if (d.abiertas.bajoMargenMinimo > 0) {
+        <div class="alert alert-warn">
+          ⚠ {{ d.abiertas.bajoMargenMinimo }} cotización{{ d.abiertas.bajoMargenMinimo === 1 ? '' : 'es' }} abierta{{ d.abiertas.bajoMargenMinimo === 1 ? '' : 's' }}
+          por debajo del margen mínimo.
+        </div>
+      }
+    </section>
+  </div>
+
+  <section class="card" [class.stale]="cargando()">
+    <div class="card-head">
+      <h2>Ventas por mes</h2>
+      <div class="leyenda">
+        <span><i class="s1"></i>Ingresos</span>
+        <span><i class="s2"></i>Ganancia</span>
+        <button type="button" class="btn btn-sm" (click)="verTabla.set(!verTabla())">
+          {{ verTabla() ? 'Ver gráfico' : 'Ver tabla' }}
+        </button>
+      </div>
+    </div>
+
+    @if (!hayVentas()) {
+      <p class="empty">
+        Aún no hay ventas registradas en este periodo. Registra una venta desde
+        <a routerLink="/cotizaciones">Cotizaciones y ventas</a>.
+      </p>
+    } @else if (verTabla()) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th class="num">Ventas</th>
+              <th class="num">Ingresos</th>
+              <th class="num">Costos</th>
+              <th class="num">Ganancia</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of d.ventasPorMes; track m.mes) {
+              <tr>
+                <td>{{ m.etiqueta }}</td>
+                <td class="num">{{ m.ventas }}</td>
+                <td class="num">{{ m.ingresos | cop }}</td>
+                <td class="num">{{ m.costos | cop }}</td>
+                <td class="num" [class.neg]="m.ganancia < 0">{{ m.ganancia | cop }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="grafico" (mouseleave)="mesActivo.set(null)">
+        <svg [attr.viewBox]="'0 0 ' + ancho + ' ' + alto" role="img" aria-label="Ingresos y ganancia por mes">
+          @for (t of marcasY(); track t.y) {
+            <line class="grilla" [attr.x1]="margen.izquierda" [attr.x2]="ancho - margen.derecha" [attr.y1]="t.y" [attr.y2]="t.y" />
+            <text class="eje" [attr.x]="margen.izquierda - 8" [attr.y]="t.y + 4" text-anchor="end">{{ t.texto }}</text>
+          }
+          @for (b of barras(); track b.etiqueta; let i = $index) {
+            @if (mesActivo() === i) {
+              <rect class="foco" [attr.x]="b.hitX" [attr.y]="margen.arriba" [attr.width]="b.hitAncho" [attr.height]="alto - margen.arriba - margen.abajo" />
+            }
+            <path class="s1" [attr.d]="b.ingresos" />
+            <path class="s2" [attr.d]="b.ganancia" />
+            @if (i % saltoEtiquetas() === 0) {
+              <text class="eje" [attr.x]="b.x" [attr.y]="alto - 10" text-anchor="middle">{{ b.etiqueta }}</text>
+            }
+            <rect
+              class="hit"
+              [attr.x]="b.hitX"
+              [attr.y]="0"
+              [attr.width]="b.hitAncho"
+              [attr.height]="alto"
+              (mouseenter)="mesActivo.set(i)"
+              (click)="mesActivo.set(i)"
+            />
+          }
+          <line class="cero" [attr.x1]="margen.izquierda" [attr.x2]="ancho - margen.derecha" [attr.y1]="lineaCero()" [attr.y2]="lineaCero()" />
+        </svg>
+        @if (mesSeleccionado(); as m) {
+          <div
+            class="tooltip"
+            [class.izquierda]="posicionTooltip(mesActivo()!) > 70"
+            [class.derecha]="posicionTooltip(mesActivo()!) < 25"
+            [style.left.%]="posicionTooltip(mesActivo()!)"
+          >
+            <strong>{{ m.etiqueta }}</strong>
+            <span>{{ m.ventas }} venta{{ m.ventas === 1 ? '' : 's' }}</span>
+            <span><i class="s1"></i>Ingresos {{ m.ingresos | cop }}</span>
+            <span><i class="s2"></i>Ganancia {{ m.ganancia | cop }}</span>
+            <span class="muted">Costos {{ m.costos | cop }}</span>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <div class="dos" [class.stale]="cargando()">
+    <section class="card">
+      <h2>Productos más rentables</h2>
+      @if (d.productos.length) {
+        <ul class="ranking">
+          @for (p of d.productos; track p.nombre) {
+            <li>
+              <div class="fila">
+                <span class="nombre">{{ p.nombre }}</span>
+                <strong class="num" [class.neg]="p.ganancia < 0">{{ p.ganancia | cop }}</strong>
+              </div>
+              <span class="barra"><span [class.neg]="p.ganancia < 0" [style.width.%]="(abs(p.ganancia) / gananciaMaxima()) * 100"></span></span>
+              <small class="muted">
+                @if (p.unidades > 0) { {{ p.unidades }} u · }ingresos {{ p.ingresos | cop }} · margen {{ p.margenPct | pct }}
+              </small>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty">Sin ventas en el periodo.</p>
+      }
+    </section>
+
+    <section class="card">
+      <h2>¿A dónde va lo vendido?</h2>
+      @if (composicion().length) {
+        <div class="apilada" role="img" aria-label="Reparto de los ingresos">
+          @for (c of composicion(); track c.nombre) {
+            @if (c.pct > 0) {
+              <span [class]="c.clase" [style.width.%]="c.pct" [title]="c.nombre"></span>
+            }
+          }
+        </div>
+        <dl class="kv">
+          @for (c of composicion(); track c.nombre) {
+            <div>
+              <dt><i [class]="c.clase"></i>{{ c.nombre }}</dt>
+              <dd>{{ c.valor | cop }} <small class="muted">{{ c.pct | pct }}</small></dd>
+            </div>
+          }
+          <div class="total"><dt>Ingresos</dt><dd>{{ d.ventas.ingresos | cop }}</dd></div>
+        </dl>
+      } @else {
+        <p class="empty">Sin ventas en el periodo.</p>
+      }
+    </section>
+  </div>
+
+  <section class="card" [class.stale]="cargando()">
+    <h2>Descuentos dados y ofrecidos</h2>
+    @if (d.descuentos.length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cotización</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Fecha</th>
+              <th class="num">Descuento</th>
+              <th class="num">Monto</th>
+              <th class="num">Margen final</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (x of d.descuentos; track x.id) {
+              <tr>
+                <td><a [routerLink]="['/cotizaciones', x.id]">{{ x.numero }}</a></td>
+                <td>{{ x.cliente }}</td>
+                <td>
+                  <span class="status" [attr.data-status]="x.estado">{{ x.esVenta ? 'Venta' : 'Cotización · ' + etiquetaEstado[x.estado] }}</span>
+                </td>
+                <td>{{ x.fecha | fecha }}</td>
+                <td class="num">{{ x.descuentoPct | pct }}</td>
+                <td class="num">{{ x.monto | cop }}</td>
+                <td class="num" [class.neg]="x.bajoMargenMinimo">
+                  {{ x.margenPct | pct }}
+                  @if (x.bajoMargenMinimo) {
+                    <span class="sr-only">por debajo del mínimo</span> ⚠
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="empty">No hay descuentos en ventas del periodo ni en cotizaciones abiertas.</p>
+    }
+  </section>
+}

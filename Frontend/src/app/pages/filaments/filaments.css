@@ -1,0 +1,47 @@
+.preview {
+  margin-top: 14px;
+  color: var(--muted);
+}
+
+.preview strong {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+.stock {
+  min-width: 170px;
+}
+
+.stock small {
+  display: block;
+  text-align: left;
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.meter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  background: var(--good);
+}
+
+.meter.low span {
+  background: var(--bad);
+}
+
+td .tag {
+  margin-left: 6px;
+}
+
+.alert {
+  margin-bottom: 16px;
+}

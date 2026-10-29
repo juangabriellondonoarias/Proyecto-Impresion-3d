@@ -1,0 +1,135 @@
+<div class="page-head">
+  <div>
+    <h1>Configuración</h1>
+    <p>Valores por defecto que usa la calculadora. Los que vienen al instalar son de ejemplo: reemplázalos por los de tu negocio.</p>
+  </div>
+</div>
+
+<form class="stack" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <section class="card">
+    <h2>Negocio</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="nombreNegocio">Nombre del negocio</label>
+        <input id="nombreNegocio" formControlName="nombreNegocio" />
+        <span class="hint">Encabezado del PDF de las cotizaciones.</span>
+      </div>
+      <div class="field">
+        <label for="valorHoraManoObra">Mano de obra</label>
+        <div class="input-wrap">
+          <input id="valorHoraManoObra" type="number" min="0" step="1000" formControlName="valorHoraManoObra" [class.invalid]="invalid('valorHoraManoObra')" />
+          <span class="unit">COP/h</span>
+        </div>
+        <span class="hint">Lo que vale una hora de tu trabajo.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Cotizaciones</h2>
+    <div class="form-grid">
+      <div class="field wide">
+        <label for="contactoNegocio">Datos de contacto del negocio</label>
+        <textarea id="contactoNegocio" rows="3" formControlName="contactoNegocio" placeholder="Teléfono, correo, NIT, dirección…"></textarea>
+        <span class="hint">Aparecen debajo del nombre en el PDF. Una línea por dato.</span>
+      </div>
+      <div class="field">
+        <label for="diasVigenciaCotizacion">Vigencia por defecto</label>
+        <div class="input-wrap">
+          <input id="diasVigenciaCotizacion" type="number" min="0" formControlName="diasVigenciaCotizacion" [class.invalid]="invalid('diasVigenciaCotizacion')" />
+          <span class="unit">días</span>
+        </div>
+      </div>
+      <div class="field wide">
+        <label for="condicionesPorDefecto">Condiciones comerciales por defecto</label>
+        <textarea id="condicionesPorDefecto" rows="5" formControlName="condicionesPorDefecto"></textarea>
+        <span class="hint">Se copian en cada cotización nueva. El texto inicial es de ejemplo: ajústalo a tus condiciones reales.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Impresora y energía</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="potenciaImpresoraW">Consumo promedio</label>
+        <div class="input-wrap">
+          <input id="potenciaImpresoraW" type="number" min="0" formControlName="potenciaImpresoraW" [class.invalid]="invalid('potenciaImpresoraW')" />
+          <span class="unit">W</span>
+        </div>
+        <span class="hint">Mídelo con un vatímetro si puedes.</span>
+      </div>
+      <div class="field">
+        <label for="precioKwh">Precio del kWh</label>
+        <div class="input-wrap">
+          <input id="precioKwh" type="number" min="0" formControlName="precioKwh" [class.invalid]="invalid('precioKwh')" />
+          <span class="unit">COP</span>
+        </div>
+        <span class="hint">Está en tu factura de energía.</span>
+      </div>
+      <div class="field">
+        <label for="precioImpresora">Precio de la impresora</label>
+        <div class="input-wrap">
+          <input id="precioImpresora" type="number" min="0" step="10000" formControlName="precioImpresora" [class.invalid]="invalid('precioImpresora')" />
+          <span class="unit">COP</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="vidaUtilImpresoraHoras">Vida útil esperada</label>
+        <div class="input-wrap">
+          <input id="vidaUtilImpresoraHoras" type="number" min="0" step="100" formControlName="vidaUtilImpresoraHoras" [class.invalid]="invalid('vidaUtilImpresoraHoras')" />
+          <span class="unit">h</span>
+        </div>
+        <span class="hint">Horas de impresión en que quieres recuperarla.</span>
+      </div>
+      <div class="field">
+        <label for="mantenimientoPorHora">Mantenimiento</label>
+        <div class="input-wrap">
+          <input id="mantenimientoPorHora" type="number" min="0" formControlName="mantenimientoPorHora" [class.invalid]="invalid('mantenimientoPorHora')" />
+          <span class="unit">COP/h</span>
+        </div>
+        <span class="hint">Boquillas, correas, superficie de impresión…</span>
+      </div>
+    </div>
+    <p class="muted rate">
+      Depreciación {{ depreciationPerHour() | cop }}/h + mantenimiento = <strong>{{ machineRate() | cop }} por hora de máquina</strong>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Precios</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="margenPorDefectoPct">Margen por defecto</label>
+        <div class="input-wrap">
+          <input id="margenPorDefectoPct" type="number" min="0" max="95" formControlName="margenPorDefectoPct" [class.invalid]="invalid('margenPorDefectoPct')" />
+          <span class="unit">%</span>
+        </div>
+        <span class="hint">Sobre el precio de venta.</span>
+      </div>
+      <div class="field">
+        <label for="margenMinimoPct">Margen mínimo</label>
+        <div class="input-wrap">
+          <input id="margenMinimoPct" type="number" min="0" max="95" formControlName="margenMinimoPct" [class.invalid]="invalid('margenMinimoPct')" />
+          <span class="unit">%</span>
+        </div>
+        <span class="hint">Ningún descuento debe dejarte por debajo de este margen.</span>
+      </div>
+      <div class="field">
+        <label for="pasoRedondeo">Redondear precios a</label>
+        <div class="input-wrap">
+          <input id="pasoRedondeo" type="number" min="0" step="50" formControlName="pasoRedondeo" [class.invalid]="invalid('pasoRedondeo')" />
+          <span class="unit">COP</span>
+        </div>
+        <span class="hint">Hacia arriba. 0 = sin redondeo.</span>
+      </div>
+    </div>
+  </section>
+
+  @if (mensaje(); as m) {
+    <div class="alert" [class.alert-good]="m.ok" [class.alert-bad]="!m.ok" role="status">{{ m.text }}</div>
+  }
+  <div class="btn-row">
+    <button type="submit" class="btn btn-primary" [disabled]="saving()">Guardar configuración</button>
+  </div>
+</form>

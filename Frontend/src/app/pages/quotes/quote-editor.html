@@ -1,0 +1,241 @@
+<div class="page-head">
+  <div>
+    <a class="back" routerLink="/cotizaciones">← Cotizaciones y ventas</a>
+    <h1>
+      {{ quote()?.numero ?? 'Nueva cotización' }}
+      @if (quote(); as q) {
+        <span class="status" [attr.data-status]="q.estado">{{ statusLabel[q.estado] }}</span>
+      }
+    </h1>
+  </div>
+  @if (quote(); as q) {
+    <div class="btn-row">
+      <a class="btn" [routerLink]="['/cotizaciones', q.id, 'imprimir']" [class.disabled]="form.dirty">Ver PDF</a>
+    </div>
+  }
+</div>
+
+@if (isSale()) {
+  <div class="alert alert-good page-alert">
+    Venta registrada el {{ quote()?.fechaVenta | fecha }}. Para modificarla, primero anula la venta.
+  </div>
+}
+
+<div class="layout">
+  <form class="stack" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <section class="card">
+      <h2>Cliente</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="nombreCliente">Nombre del cliente</label>
+          <input id="nombreCliente" formControlName="nombreCliente" [class.invalid]="invalid(form.controls.nombreCliente, 'nombreCliente')" />
+        </div>
+        <div class="field">
+          <label for="contactoCliente">Contacto</label>
+          <input id="contactoCliente" formControlName="contactoCliente" placeholder="Teléfono, correo o NIT" />
+        </div>
+        <div class="field">
+          <label for="fechaEmision">Fecha</label>
+          <input id="fechaEmision" type="date" formControlName="fechaEmision" [class.invalid]="invalid(form.controls.fechaEmision, 'fechaEmision')" />
+        </div>
+        <div class="field">
+          <label for="diasVigencia">Vigencia</label>
+          <div class="input-wrap">
+            <input id="diasVigencia" type="number" min="0" formControlName="diasVigencia" [class.invalid]="invalid(form.controls.diasVigencia)" />
+            <span class="unit">días</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Productos</h2>
+        @if (!isSale()) {
+          <button type="button" class="btn btn-sm" (click)="repriceAll()" [disabled]="pricingRows() > 0">Recalcular precios</button>
+        }
+      </div>
+      <p class="muted hint-line">
+        Al elegir un producto del catálogo, el costo y el precio se calculan para esa cantidad. Puedes ajustar el precio a mano.
+      </p>
+
+      <div formArrayName="items" class="items">
+        @for (row of items.controls; track row; let i = $index) {
+          <div class="item" [formGroupName]="i">
+            <div class="field product">
+              <label [for]="'p' + i">Producto</label>
+              <select [id]="'p' + i" formControlName="productoId">
+                <option [ngValue]="null">Manual (sin catálogo)</option>
+                @for (p of products(); track p.id) {
+                  <option [ngValue]="p.id">{{ p.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="field desc">
+              <label [for]="'d' + i">Descripción en la cotización</label>
+              <input [id]="'d' + i" formControlName="descripcion" [class.invalid]="invalid(row.controls['descripcion'])" />
+            </div>
+            <div class="field qty">
+              <label [for]="'q' + i">Cantidad</label>
+              <input [id]="'q' + i" type="number" min="1" step="1" formControlName="cantidad" [class.invalid]="invalid(row.controls['cantidad'])" />
+            </div>
+            <div class="field money">
+              <label [for]="'c' + i">Costo unitario</label>
+              <input [id]="'c' + i" type="number" min="0" formControlName="costoUnitario" [class.invalid]="invalid(row.controls['costoUnitario'])" />
+            </div>
+            <div class="field money">
+              <label [for]="'u' + i">Precio unitario</label>
+              <input [id]="'u' + i" type="number" min="0" step="100" formControlName="precioUnitario" [class.invalid]="invalid(row.controls['precioUnitario'])" />
+            </div>
+            <div class="line">
+              <span class="muted">Total</span>
+              <strong>{{ lineTotal(row) | cop }}</strong>
+              <small [class.neg]="(lineMargin(row) ?? 0) < 0">margen {{ lineMargin(row) | pct }}</small>
+            </div>
+            @if (!isSale()) {
+              <button type="button" class="btn btn-sm btn-danger remove" (click)="removeItem(i)" [attr.aria-label]="'Quitar línea ' + (i + 1)">Quitar</button>
+            }
+          </div>
+        }
+      </div>
+      @if (!isSale()) {
+        <button type="button" class="btn add" (click)="addItem()">+ Agregar producto</button>
+      }
+    </section>
+
+    <section class="card">
+      <h2>Costos del pedido y precio</h2>
+      <p class="muted hint-line">Diseño, envío y otros costos se cobran una sola vez, como línea aparte, con el margen de la cotización.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="costoDiseno">Diseño</label>
+          <div class="input-wrap">
+            <input id="costoDiseno" type="number" min="0" step="1000" formControlName="costoDiseno" />
+            <span class="unit">COP</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="costoEnvio">Envío</label>
+          <div class="input-wrap">
+            <input id="costoEnvio" type="number" min="0" step="1000" formControlName="costoEnvio" />
+            <span class="unit">COP</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="otrosCostos">Otros costos</label>
+          <div class="input-wrap">
+            <input id="otrosCostos" type="number" min="0" step="1000" formControlName="otrosCostos" />
+            <span class="unit">COP</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="margenPct">Margen</label>
+          <div class="input-wrap">
+            <input id="margenPct" type="number" min="0" max="95" formControlName="margenPct" [class.invalid]="invalid(form.controls.margenPct, 'margenPct')" />
+            <span class="unit">%</span>
+          </div>
+          <span class="hint">Si lo cambias, usa «Recalcular precios».</span>
+        </div>
+        <div class="field">
+          <label for="descuentoPct">Descuento</label>
+          <div class="input-wrap">
+            <input id="descuentoPct" type="number" min="0" max="100" formControlName="descuentoPct" [class.invalid]="invalid(form.controls.descuentoPct, 'descuentoPct')" />
+            <span class="unit">%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Condiciones y notas</h2>
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="condiciones">Condiciones comerciales</label>
+          <textarea id="condiciones" rows="5" formControlName="condiciones"></textarea>
+          <span class="hint">Aparecen en el PDF. El texto por defecto se cambia en Configuración.</span>
+        </div>
+        <div class="field wide">
+          <label for="notas">Notas internas</label>
+          <textarea id="notas" rows="2" formControlName="notas"></textarea>
+          <span class="hint">No aparecen en el PDF.</span>
+        </div>
+      </div>
+    </section>
+
+    @if (mensaje(); as m) {
+      <div class="alert" [class.alert-good]="m.ok" [class.alert-bad]="!m.ok" role="status">{{ m.text }}</div>
+    }
+
+    <div class="btn-row">
+      @if (!isSale()) {
+        <button type="submit" class="btn btn-primary" [disabled]="busy()">Guardar cotización</button>
+      }
+      @if (quote() && !isSale()) {
+        <button type="button" class="btn btn-danger" (click)="remove()">Eliminar</button>
+      }
+    </div>
+  </form>
+
+  <aside class="side">
+    <section class="card totals">
+      <h2>Totales</h2>
+      @if (resumen(); as s) {
+        <dl class="kv">
+          <div><dt>Productos ({{ s.unidades }} u)</dt><dd>{{ s.precioProductos | cop }}</dd></div>
+          @if (s.precioFijo > 0) {
+            <div><dt>Diseño, envío y otros</dt><dd>{{ s.precioFijo | cop }}</dd></div>
+          }
+          @if (s.montoDescuento > 0) {
+            <div><dt>Descuento {{ s.descuentoPct | pct }}</dt><dd>−{{ s.montoDescuento | cop }}</dd></div>
+          }
+          <div class="grand"><dt>Total para el cliente</dt><dd>{{ s.total | cop }}</dd></div>
+        </dl>
+        <h3>Rentabilidad estimada</h3>
+        <dl class="kv">
+          <div><dt>Costo total</dt><dd>{{ s.costoTotal | cop }}</dd></div>
+          <div><dt>Ganancia</dt><dd [class.neg]="s.ganancia < 0">{{ s.ganancia | cop }}</dd></div>
+          <div><dt>Margen real</dt><dd [class.neg]="s.bajoMargenMinimo || s.ganancia < 0">{{ s.margenPct | pct }}</dd></div>
+          <div><dt>Descuento máximo <small>(margen mín. {{ s.margenMinimoPct | pct }})</small></dt><dd>{{ s.descuentoMaximoPct | pct }}</dd></div>
+        </dl>
+        @for (w of s.advertencias; track w) {
+          <div class="alert alert-warn">{{ w }}</div>
+        }
+      }
+    </section>
+
+    @if (quote(); as q) {
+      <section class="card">
+        <h2>Estado</h2>
+        @if (isSale()) {
+          <p class="muted">Vendida el {{ q.fechaVenta | fecha }}.</p>
+          <button type="button" class="btn btn-danger full" (click)="setStatus('ACEPTADA')" [disabled]="busy()">Anular venta</button>
+        } @else {
+          @if (form.dirty) {
+            <p class="muted small">Guarda los cambios para poder cambiar el estado.</p>
+          }
+          <div class="status-buttons">
+            @for (s of manualStatuses; track s) {
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.current]="q.estado === s"
+                [disabled]="busy() || form.dirty || q.estado === s"
+                (click)="setStatus(s)"
+              >
+                {{ statusLabel[s] }}
+              </button>
+            }
+          </div>
+          <div class="sale-box">
+            <label for="soldDate">Fecha de la venta</label>
+            <input id="soldDate" type="date" [value]="soldDate()" (change)="soldDate.set($any($event.target).value)" />
+            <button type="button" class="btn btn-accent full" (click)="setStatus('VENDIDA')" [disabled]="busy() || form.dirty">
+              Registrar venta
+            </button>
+            <p class="muted small">Cuenta como venta real y descuenta el filamento del inventario.</p>
+          </div>
+        }
+      </section>
+    }
+  </aside>
+</div>

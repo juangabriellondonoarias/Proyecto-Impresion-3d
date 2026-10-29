@@ -1,0 +1,206 @@
+.shell {
+  display: grid;
+  grid-template-columns: 264px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 14px;
+  background: var(--side-bg);
+  color: var(--side-fg);
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.brand-mark svg {
+  width: 22px;
+  height: 22px;
+}
+
+.brand strong {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--side-strong);
+}
+
+.brand small {
+  color: var(--side-muted);
+  font-size: 0.78rem;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--side-fg);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.93rem;
+}
+
+nav a svg {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  fill: currentColor;
+  fill-rule: evenodd;
+  opacity: 0.75;
+}
+
+nav a:hover {
+  background: var(--side-hover);
+  color: var(--side-strong);
+}
+
+nav a.active {
+  background: var(--side-active);
+  color: var(--side-strong);
+  box-shadow: 0 0 0 1px var(--line);
+  font-weight: 600;
+}
+
+nav a.active svg {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.sidebar-foot {
+  margin-top: auto;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  color: var(--side-muted);
+}
+
+.main {
+  min-width: 0;
+}
+
+.topbar,
+.scrim {
+  display: none;
+}
+
+.content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 3vw, 40px) 64px;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(280px, 85vw);
+    z-index: 30;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+  }
+
+  .menu-open .sidebar {
+    transform: none;
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    border: 0;
+    background: rgb(28 31 38 / 0.35);
+  }
+
+  .menu-open .scrim {
+    display: block;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .menu-btn {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--fg);
+  }
+
+  .menu-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  .content {
+    padding-top: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+}
+
+/* Al imprimir (cotización en PDF) solo sale el contenido de la página. */
+@media print {
+  .shell {
+    display: block;
+  }
+
+  .sidebar,
+  .topbar,
+  .scrim {
+    display: none !important;
+  }
+
+  .content {
+    max-width: none;
+    padding: 0;
+  }
+}

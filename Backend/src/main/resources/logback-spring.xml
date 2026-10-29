@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Registro (logs) de la aplicación.
+  - En consola: formato corto y con colores.
+  - En archivo: Backend/logs/costos.log, un archivo por día, se guardan 30 días.
+  Para ver el tiempo de cada petición, cambia el nivel de "co.impresion3d.costos.aspect" a DEBUG.
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <property name="CARPETA_LOGS" value="logs"/>
+    <property name="PATRON_ARCHIVO" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"/>
+
+    <appender name="CONSOLA" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level) %clr(%logger{30}){cyan} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ARCHIVO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${CARPETA_LOGS}/costos.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${CARPETA_LOGS}/costos.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${PATRON_ARCHIVO}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="co.impresion3d.costos" level="INFO"/>
+    <logger name="co.impresion3d.costos.aspect" level="INFO"/>
+    <logger name="org.flywaydb" level="INFO"/>
+
+    <root level="WARN">
+        <appender-ref ref="CONSOLA"/>
+        <appender-ref ref="ARCHIVO"/>
+    </root>
+
+    <!-- Mensajes de arranque de Spring (puerto, tiempo de inicio) -->
+    <logger name="org.springframework.boot" level="INFO"/>
+</configuration>

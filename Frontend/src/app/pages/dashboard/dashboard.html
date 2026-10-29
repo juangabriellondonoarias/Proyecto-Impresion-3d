@@ -1,0 +1,99 @@
+<div class="page-head">
+  <div>
+    <h1>Panel principal</h1>
+    <p>{{ settings()?.nombreNegocio || 'Tu negocio' }} · resumen del catálogo y del inventario.</p>
+  </div>
+  <a class="btn btn-accent" routerLink="/calculadora">Calcular un precio</a>
+</div>
+
+@if (error()) {
+  <div class="alert alert-bad page-alert">{{ error() }}</div>
+}
+
+@if (hasDemo()) {
+  <div class="alert alert-warn page-alert">
+    Hay datos de <strong>demostración</strong> (marcados «Demo»). Son valores ilustrativos: reemplázalos por tus filamentos, productos y la
+    <a routerLink="/configuracion">configuración</a> real.
+  </div>
+}
+
+<div class="summary">
+  <div class="card"><span class="muted">Productos</span><strong>{{ products().length }}</strong></div>
+  <div class="card"><span class="muted">Filamentos</span><strong>{{ filaments().length }}</strong></div>
+  <div class="card"><span class="muted">Valor del inventario</span><strong>{{ inventoryValue() | cop }}</strong></div>
+  <div class="card" [class.warn]="lowStock().length">
+    <span class="muted">Filamentos por agotarse</span><strong>{{ lowStock().length }}</strong>
+  </div>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <h2>Precio de referencia por producto</h2>
+    <p class="muted note">1 unidad, margen por defecto, sin diseño, preparación ni envío. Para un pedido real usa la calculadora.</p>
+    @if (prices().length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="num">Costo</th>
+              <th class="num">Precio</th>
+              <th class="num">Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of prices(); track row.product.id) {
+              <tr>
+                <td>
+                  <a routerLink="/calculadora" [queryParams]="{ producto: row.product.id }">{{ row.product.nombre }}</a>
+                </td>
+                <td class="num">{{ row.result.costoUnitario | cop }}</td>
+                <td class="num">{{ row.result.precioUnitarioRecomendado | cop }}</td>
+                <td class="num">{{ row.result.margenRealPct | pct }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="empty">Agrega <a routerLink="/productos">productos</a> con su filamento para ver sus precios aquí.</p>
+    }
+  </section>
+
+  <section class="card">
+    <h2>Ventas registradas</h2>
+    <p class="muted note">Solo cuentan las cotizaciones registradas como venta.</p>
+    <dl class="kv">
+      <div><dt>Ventas</dt><dd>{{ sales().length }}</dd></div>
+      <div><dt>Total vendido</dt><dd>{{ salesTotal() | cop }}</dd></div>
+      <div><dt>Ganancia estimada</dt><dd>{{ salesProfit() | cop }}</dd></div>
+    </dl>
+    @if (recentSales().length) {
+      <ul class="recent">
+        @for (q of recentSales(); track q.id) {
+          <li>
+            <a [routerLink]="['/cotizaciones', q.id]">{{ q.numero }}</a> {{ q.nombreCliente }}
+            <span class="muted">· {{ q.fechaVenta | fecha }} · {{ q.resumen.total | cop }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="muted small">Aún no hay ventas registradas.</p>
+    }
+
+    <h3 class="sub-title">Cotizaciones abiertas</h3>
+    <p class="muted small">
+      {{ openQuotes().length }} por {{ openTotal() | cop }}. Son ventas posibles, todavía no realizadas.
+      <a routerLink="/cotizaciones">Ver cotizaciones</a>
+    </p>
+
+    @if (lowStock().length) {
+      <h3 class="sub-title">Filamento por agotarse</h3>
+      <ul class="low">
+        @for (f of lowStock(); track f.id) {
+          <li>{{ f.etiqueta }} <span class="muted">· {{ f.pesoDisponibleG }} g</span></li>
+        }
+      </ul>
+    }
+  </section>
+</div>

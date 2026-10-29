@@ -1,0 +1,43 @@
+<div class="shell" [class.menu-open]="menuOpen()">
+  <aside class="sidebar" aria-label="Menú principal">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4v10l-8 4-8-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7l8 4 8-4M12 11v10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      </span>
+      <div>
+        <strong>Costos 3D</strong>
+        <small>Precios y rentabilidad</small>
+      </div>
+    </div>
+
+    <nav>
+      @for (item of nav; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+          (click)="closeMenu()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <p class="sidebar-foot">Valores en pesos colombianos (COP)</p>
+  </aside>
+
+  <button type="button" class="scrim" aria-label="Cerrar menú" (click)="closeMenu()"></button>
+
+  <div class="main">
+    <header class="topbar">
+      <button type="button" class="menu-btn" aria-label="Abrir menú" (click)="toggleMenu()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z" /></svg>
+      </button>
+      <strong>Costos 3D</strong>
+    </header>
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

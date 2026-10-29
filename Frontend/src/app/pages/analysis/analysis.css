@@ -1,0 +1,346 @@
+/* Colores de serie validados (contraste y daltonismo) sobre el fondo de las tarjetas. */
+:host {
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+}
+
+.periodo {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.periodo button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.periodo button.on {
+  background: var(--surface-2);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.page-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rango {
+  margin: -12px 0 14px;
+  font-size: 0.86rem;
+}
+
+.stale {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.bloques,
+.dos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.bloque h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.bloque h2 small {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.marca {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.marca.venta {
+  background: var(--good);
+}
+
+.marca.abierta {
+  background: var(--warn);
+}
+
+.bloque.venta {
+  border-top: 3px solid var(--good);
+}
+
+.bloque.abierta {
+  border-top: 3px solid var(--warn);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px 16px;
+}
+
+.kpis div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.kpis span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.kpis strong {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.kpis small {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.bloque .alert {
+  margin-top: 14px;
+}
+
+.neg {
+  color: var(--bad) !important;
+}
+
+.card {
+  margin-bottom: 16px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.leyenda {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+i.s1,
+i.s2,
+i.s3 {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.s1 {
+  background: var(--serie-1);
+  fill: var(--serie-1);
+}
+
+.s2 {
+  background: var(--serie-2);
+  fill: var(--serie-2);
+}
+
+.s3 {
+  background: var(--serie-3);
+  fill: var(--serie-3);
+}
+
+/* ---------- Gráfico mensual ---------- */
+.grafico {
+  position: relative;
+}
+
+.grafico svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grilla {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.cero {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.eje {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.foco {
+  fill: var(--surface-2);
+}
+
+.hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgb(28 31 38 / 0.12);
+  font-size: 0.8rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Cerca de los bordes, el tooltip se abre hacia adentro para no salirse de la tarjeta. */
+.tooltip.izquierda {
+  transform: translateX(calc(-100% - 12px));
+}
+
+.tooltip.derecha {
+  transform: translateX(12px);
+}
+
+/* ---------- Ranking de productos ---------- */
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nombre {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.barra {
+  display: block;
+  height: 8px;
+  margin: 5px 0 3px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--serie-1);
+}
+
+.barra span.neg {
+  background: var(--bad);
+}
+
+.ranking small {
+  font-size: 0.76rem;
+}
+
+/* ---------- Composición ---------- */
+.apilada {
+  display: flex;
+  gap: 2px;
+  height: 18px;
+  margin: 6px 0 14px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.apilada span {
+  display: block;
+  height: 100%;
+}
+
+.kv {
+  margin: 0;
+}
+
+.kv > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+
+.kv dt {
+  color: var(--muted);
+}
+
+.kv dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kv .total dt,
+.kv .total dd {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 900px) {
+  .bloques,
+  .dos {
+    grid-template-columns: 1fr;
+  }
+}

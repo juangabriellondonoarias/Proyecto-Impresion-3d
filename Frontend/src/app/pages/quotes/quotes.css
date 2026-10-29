@@ -1,0 +1,43 @@
+.summary small {
+  font-size: 0.78rem;
+}
+
+.summary .sale {
+  border-left: 3px solid var(--good);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs button {
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabs button.on {
+  color: var(--fg);
+  border-bottom-color: var(--primary);
+}
+
+.tabs span {
+  margin-left: 4px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.78rem;
+}
+
+.neg {
+  color: var(--bad);
+}
