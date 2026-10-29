@@ -3,12 +3,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiServicio, leerErrorApi } from '../../core/api.service';
 import { CopPipe } from '../../core/format';
-import { Configuracion } from '../../core/models';
+import { Configuracion, EstadoRespaldos } from '../../core/models';
 
 @Component({
   selector: 'app-settings',
   imports: [ReactiveFormsModule, CopPipe],
   templateUrl: './settings.html',
+  styleUrl: './settings.css',
 })
 export class SettingsPage implements OnInit {
   private api = inject(ApiServicio);
@@ -17,6 +18,10 @@ export class SettingsPage implements OnInit {
   readonly mensaje = signal<{ ok: boolean; text: string } | null>(null);
   readonly serverErrors = signal<Record<string, string>>({});
   readonly saving = signal(false);
+  readonly respaldos = signal<EstadoRespaldos | null>(null);
+  readonly respaldando = signal(false);
+  readonly mensajeRespaldo = signal<{ ok: boolean; text: string } | null>(null);
+  private readonly fechaHora = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
   private num = (validators = [Validators.required, Validators.min(0)]) => this.fb.control<number | null>(null, validators);
 
@@ -46,6 +51,7 @@ export class SettingsPage implements OnInit {
   readonly machineRate = computed(() => this.depreciationPerHour() + (this.value().mantenimientoPorHora ?? 0));
 
   ngOnInit(): void {
+    this.cargarRespaldos();
     this.api.obtenerConfiguracion().subscribe({
       next: (s) =>
         this.form.reset({
@@ -88,5 +94,38 @@ export class SettingsPage implements OnInit {
   invalid(key: string): boolean {
     const c = this.form.get(key);
     return !!(c && c.invalid && c.touched) || !!this.serverErrors()[key];
+  }
+
+  cargarRespaldos(): void {
+    this.api.estadoRespaldos().subscribe({
+      next: (estado) => this.respaldos.set(estado),
+      error: (err) => this.mensajeRespaldo.set({ ok: false, text: leerErrorApi(err).mensaje }),
+    });
+  }
+
+  respaldarAhora(): void {
+    this.respaldando.set(true);
+    this.mensajeRespaldo.set(null);
+    this.api.respaldarAhora().subscribe({
+      next: (archivo) => {
+        this.respaldando.set(false);
+        this.mensajeRespaldo.set({ ok: true, text: `Copia creada: ${archivo.nombre}` });
+        this.cargarRespaldos();
+      },
+      error: (err) => {
+        this.respaldando.set(false);
+        this.mensajeRespaldo.set({ ok: false, text: leerErrorApi(err).mensaje });
+      },
+    });
+  }
+
+  /** «2026-10-29T21:00:00» -> «29 oct 2026, 9:00 p. m.» */
+  formatoFecha(iso: string): string {
+    return this.fechaHora.format(new Date(iso));
+  }
+
+  /** Bytes a KB o MB. */
+  tamano(bytes: number): string {
+    return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 }

@@ -133,3 +133,63 @@
     <button type="submit" class="btn btn-primary" [disabled]="saving()">Guardar configuración</button>
   </div>
 </form>
+
+<section class="card respaldos">
+  <div class="respaldos-cabecera">
+    <div>
+      <h2>Copias de seguridad</h2>
+      @if (respaldos(); as r) {
+        <p class="muted">
+          @if (r.habilitado) {
+            {{ r.horario }} se guarda una copia completa de la base de datos, y otra al encender el backend si ese día
+            todavía no hay una. Se conservan las últimas {{ r.conservar }}.
+          } @else {
+            Las copias automáticas están desactivadas (RESPALDO_HABILITADO en el archivo .env).
+          }
+        </p>
+      }
+    </div>
+    <button type="button" class="btn btn-primary" (click)="respaldarAhora()" [disabled]="respaldando()">
+      {{ respaldando() ? 'Copiando…' : 'Hacer copia ahora' }}
+    </button>
+  </div>
+
+  @if (mensajeRespaldo(); as m) {
+    <div class="alert" [class.alert-good]="m.ok" [class.alert-bad]="!m.ok" role="status">{{ m.text }}</div>
+  }
+
+  @if (respaldos(); as r) {
+    <p class="carpeta">Carpeta: <code>{{ r.carpeta }}</code></p>
+    @if (r.archivos.length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Copia</th>
+              <th>Fecha</th>
+              <th class="num">Tamaño</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of r.archivos.slice(0, 7); track a.nombre) {
+              <tr>
+                <td><code>{{ a.nombre }}</code></td>
+                <td>{{ formatoFecha(a.fecha) }}</td>
+                <td class="num">{{ tamano(a.tamanoBytes) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (r.archivos.length > 7) {
+        <p class="muted">Y {{ r.archivos.length - 7 }} copias más en la carpeta.</p>
+      }
+    } @else {
+      <p class="empty">Todavía no hay copias. Usa «Hacer copia ahora» para crear la primera.</p>
+    }
+    <p class="muted restaurar">
+      Para restaurar una copia: en MySQL Workbench, menú <strong>Server → Data Import</strong>, elige
+      «Import from Self-Contained File» y el archivo .sql. Esto reemplaza los datos actuales.
+    </p>
+  }
+</section>

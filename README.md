@@ -107,6 +107,8 @@ Backend/src/main/resources
 | POST | `/api/cotizaciones/precio-item` | Costo y precio de un producto para una cantidad |
 | POST | `/api/descuentos/comparar` | Descuentos por mayor para un producto y una cantidad |
 | GET | `/api/analisis?meses=12` | Indicadores de rentabilidad del periodo |
+| GET | `/api/exportar/excel?desde=&hasta=` | Excel de ventas y cotizaciones (fechas opcionales) |
+| GET, POST | `/api/respaldos` | Estado de las copias de seguridad / hacer una copia ahora |
 
 ### Cambios en la base de datos
 
@@ -158,6 +160,35 @@ Los costos fijos del pedido (preparación, diseño, envío, otros) se cuentan un
 - **Tasa de cierre**: ventas / (ventas + rechazadas) entre las cotizaciones emitidas en el periodo.
 
 `AnalisisServicioTest` lo verifica con cinco cotizaciones calculadas a mano.
+
+## Exportar a Excel
+
+En **Cotizaciones y ventas → Exportar a Excel**. El archivo trae cuatro hojas:
+
+| Hoja | Contenido |
+|---|---|
+| Resumen | Ventas del periodo (cantidad, ingresos, costos, ganancia, margen, descuentos) y cotizaciones abiertas aparte |
+| Ventas | Una fila por venta, filtradas por **fecha de venta**, con fila de totales (fórmulas SUMA) |
+| Cotizaciones | Las que no son ventas, filtradas por **fecha de emisión**, con su estado |
+| Detalle | Una fila por producto de cada venta y cotización, más la línea de diseño, preparación y envío |
+
+Los valores son números y fechas reales de Excel, así que se pueden sumar, filtrar y hacer tablas dinámicas.
+
+## Copias de seguridad
+
+- El backend guarda una copia completa de MySQL (`mysqldump`) **todos los días a las 9:00 p. m.** y otra **al encender el backend** si ese día todavía no hay una (por si el computador estaba apagado a esa hora).
+- Quedan en `Backend/respaldos/costos3d-AAAA-MM-DD_HHMMSS.sql`. Se conservan las últimas 30. La carpeta está en `.gitignore`.
+- En **Configuración → Copias de seguridad** se ven las copias y se puede hacer una al instante.
+- La contraseña se pasa a `mysqldump` en un archivo temporal que se borra al terminar: no aparece en la línea de comandos ni en la copia.
+- Variables del `.env`: `RESPALDO_MYSQLDUMP` (ruta de mysqldump.exe), `RESPALDO_CONSERVAR`, `RESPALDO_CRON` (hora) y `RESPALDO_HABILITADO`.
+
+**Restaurar una copia** (reemplaza los datos actuales): en MySQL Workbench, **Server → Data Import → Import from Self-Contained File**, elige el `.sql` y pulsa **Start Import**. O en una terminal:
+
+```bash
+mysql -u root -p < Backend/respaldos/costos3d-2026-10-29_210000.sql
+```
+
+**Recomendado:** copia de vez en cuando la carpeta `respaldos` a otro lugar (USB, Google Drive, OneDrive). Si el disco del computador falla, las copias locales se pierden con él.
 
 ## Datos de demostración
 

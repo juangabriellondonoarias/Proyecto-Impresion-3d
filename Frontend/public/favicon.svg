@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Costos 3D</title>
+  <rect width="32" height="32" rx="8" fill="#f08a24"/>
+  <g fill="none" stroke="#1b1206" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M16 6.5 7.5 10.75v10.5L16 25.5l8.5-4.25v-10.5z"/>
+    <path d="M7.5 10.75 16 15l8.5-4.25M16 15v10.5"/>
+  </g>
+</svg>

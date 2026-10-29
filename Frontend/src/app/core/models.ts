@@ -306,3 +306,17 @@ export interface ResultadoAnalisis {
     bajoMargenMinimo: boolean;
   }[];
 }
+
+export interface ArchivoRespaldo {
+  nombre: string;
+  tamanoBytes: number;
+  fecha: string;
+}
+
+export interface EstadoRespaldos {
+  habilitado: boolean;
+  carpeta: string;
+  horario: string;
+  conservar: number;
+  archivos: ArchivoRespaldo[];
+}

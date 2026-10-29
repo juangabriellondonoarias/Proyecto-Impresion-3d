@@ -28,6 +28,30 @@
   </div>
 </div>
 
+<section class="card exportar">
+  <div class="exportar-campos">
+    <div class="field">
+      <label for="exportarDesde">Desde</label>
+      <input #desde id="exportarDesde" type="date" />
+    </div>
+    <div class="field">
+      <label for="exportarHasta">Hasta</label>
+      <input #hasta id="exportarHasta" type="date" />
+    </div>
+    <button type="button" class="btn" (click)="exportarExcel(desde.value, hasta.value)" [disabled]="exportando()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" /></svg>
+      {{ exportando() ? 'Generando…' : 'Exportar a Excel' }}
+    </button>
+  </div>
+  <p class="muted exportar-nota">
+    Ventas (por fecha de venta) y cotizaciones (por fecha de emisión), en hojas separadas, con el detalle de productos.
+    Sin fechas se exporta todo el historial.
+  </p>
+  @if (mensajeExportar(); as m) {
+    <div class="alert" [class.alert-good]="m.ok" [class.alert-bad]="!m.ok" role="status">{{ m.texto }}</div>
+  }
+</section>
+
 <div class="tabs" role="tablist">
   <button type="button" role="tab" [class.on]="tab() === 'cotizaciones'" [attr.aria-selected]="tab() === 'cotizaciones'" (click)="tab.set('cotizaciones')">
     Cotizaciones <span>{{ open().length }}</span>

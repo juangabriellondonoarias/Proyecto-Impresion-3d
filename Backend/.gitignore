@@ -40,3 +40,6 @@ data/
 
 ### Logs de la aplicación ###
 logs/
+
+### Copias de seguridad (contienen todos los datos) ###
+respaldos/

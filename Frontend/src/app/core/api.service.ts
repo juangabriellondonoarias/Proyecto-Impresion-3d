@@ -1,11 +1,13 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
+  ArchivoRespaldo,
   Configuracion,
   Cotizacion,
   ErrorApi,
   EstadoCotizacion,
+  EstadoRespaldos,
   Filamento,
   PrecioItem,
   Producto,
@@ -101,6 +103,34 @@ export class ApiServicio {
   analizar(meses: number): Observable<ResultadoAnalisis> {
     return this.http.get<ResultadoAnalisis>('/api/analisis', { params: { meses } });
   }
+
+  /** Excel de ventas y cotizaciones. Fechas opcionales «2026-10-31». */
+  descargarExcel(desde: string | null, hasta: string | null): Observable<HttpResponse<Blob>> {
+    const params: Record<string, string> = {};
+    if (desde) params['desde'] = desde;
+    if (hasta) params['hasta'] = hasta;
+    return this.http.get('/api/exportar/excel', { params, responseType: 'blob', observe: 'response' });
+  }
+
+  estadoRespaldos(): Observable<EstadoRespaldos> {
+    return this.http.get<EstadoRespaldos>('/api/respaldos');
+  }
+
+  respaldarAhora(): Observable<ArchivoRespaldo> {
+    return this.http.post<ArchivoRespaldo>('/api/respaldos', null);
+  }
+}
+
+/** Guarda en el equipo un archivo descargado de la API, con el nombre que manda el servidor. */
+export function guardarArchivo(respuesta: HttpResponse<Blob>, nombrePorDefecto: string): void {
+  const disposicion = respuesta.headers.get('Content-Disposition') ?? '';
+  const nombre = /filename="?([^";]+)"?/.exec(disposicion)?.[1] ?? nombrePorDefecto;
+  const url = URL.createObjectURL(respuesta.body!);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /** Extrae el mensaje y los errores por campo que devuelve el backend. */

@@ -31,3 +31,12 @@ aplicacion:
   cors:
     # Orígenes del frontend permitidos, separados por coma.
     origenes: ${CORS_ORIGENES:http://localhost:4200}
+  # Copias de seguridad de MySQL (Backend/respaldos). Ver RespaldoServicio.
+  respaldo:
+    habilitado: ${RESPALDO_HABILITADO:true}
+    carpeta: ${RESPALDO_CARPETA:respaldos}
+    mysqldump: ${RESPALDO_MYSQLDUMP:mysqldump}
+    conservar: ${RESPALDO_CONSERVAR:30}
+    # segundo minuto hora día mes día-semana (hora de Colombia). Por defecto: todos los días a las 9:00 p. m.
+    cron: "${RESPALDO_CRON:0 0 21 * * *}"
+    al-arrancar: true

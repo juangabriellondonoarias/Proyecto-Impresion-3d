@@ -42,6 +42,17 @@ public class ManejadorGlobalExcepciones {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorApi(ex.getMessage(), Map.of()));
     }
 
+    @ExceptionHandler(SolicitudInvalidaExcepcion.class)
+    public ResponseEntity<ErrorApi> solicitudInvalida(SolicitudInvalidaExcepcion ex) {
+        return ResponseEntity.badRequest().body(new ErrorApi(ex.getMessage(), Map.of()));
+    }
+
+    @ExceptionHandler(RespaldoExcepcion.class)
+    public ResponseEntity<ErrorApi> respaldo(RespaldoExcepcion ex) {
+        log.error("Copia de seguridad fallida: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorApi(ex.getMessage(), Map.of()));
+    }
+
     @ExceptionHandler(ConflictoExcepcion.class)
     public ResponseEntity<ErrorApi> conflicto(ConflictoExcepcion ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorApi(ex.getMessage(), Map.of()));

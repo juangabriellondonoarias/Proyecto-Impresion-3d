@@ -1,7 +1,7 @@
 package co.impresion3d.costos.controller;
 
 import co.impresion3d.costos.dto.ResultadoAnalisis;
-import co.impresion3d.costos.exception.ConflictoExcepcion;
+import co.impresion3d.costos.exception.SolicitudInvalidaExcepcion;
 import co.impresion3d.costos.service.AnalisisServicio;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +27,7 @@ public class AnalisisControlador {
     @GetMapping
     public ResultadoAnalisis analizar(@RequestParam(defaultValue = "12") int meses) {
         if (meses < 1 || meses > 36) {
-            throw new ConflictoExcepcion("El periodo debe estar entre 1 y 36 meses.");
+            throw new SolicitudInvalidaExcepcion("El periodo debe estar entre 1 y 36 meses.");
         }
         return servicio.analizar(meses, LocalDate.now(COLOMBIA));
     }
